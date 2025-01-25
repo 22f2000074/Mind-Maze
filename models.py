@@ -31,7 +31,6 @@ class Quiz(db.Model):
     chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'))
     date_of_quiz = db.Column(db.Date)
     time_duration = db.Column(db.String(10))
-    remarks = db.Column(db.String(500))
     questions = db.relationship('Question', backref='quiz', lazy=True)
 
 
@@ -40,46 +39,12 @@ class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
     question_statement = db.Column(db.String(500), nullable=False)
-    question_type = db.Column(db.String(10), nullable=False)  # MCQ, MSQ, TITA
-    __mapper_args__ = {
-        'polymorphic_identity': 'question',  # Base identifier
-        'polymorphic_on': question_type     # Determines the subclass
-    }
-
-
-class MCQQuestion(Question):
-    __tablename__ = 'mcq_question'
-    id = db.Column(db.Integer, db.ForeignKey('question.id'), primary_key=True)
     option1 = db.Column(db.String(150), nullable=False)
     option2 = db.Column(db.String(150), nullable=False)
     option3 = db.Column(db.String(150), nullable=False)
     option4 = db.Column(db.String(150), nullable=False)
     correct_option = db.Column(db.Integer, nullable=False)
-    __mapper_args__ = {
-        'polymorphic_identity': 'MCQ'  # Identifier for this subclass
-    }
-
-
-class MSQQuestion(Question):
-    __tablename__ = 'msq_question'
-    id = db.Column(db.Integer, db.ForeignKey('question.id'), primary_key=True)
-    option1 = db.Column(db.String(150), nullable=False)
-    option2 = db.Column(db.String(150), nullable=False)
-    option3 = db.Column(db.String(150), nullable=False)
-    option4 = db.Column(db.String(150), nullable=False)
-    correct_options = db.Column(db.String(150), nullable=False)  # Comma-separated values
-    __mapper_args__ = {
-        'polymorphic_identity': 'MSQ'
-    }
-
-
-class TITAQuestion(Question):
-    __tablename__ = 'tita_question'
-    id = db.Column(db.Integer, db.ForeignKey('question.id'), primary_key=True)
-    correct_answer = db.Column(db.String(500), nullable=False)
-    __mapper_args__ = {
-        'polymorphic_identity': 'TITA'
-    }
+    marks = db.Column(db.Integer, nullable=False)
 
 
 
@@ -87,7 +52,6 @@ class Score(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    time_stamp_of_attempt = db.Column(db.DateTime)
     total_scored = db.Column(db.Integer)
 
 with app.app_context():

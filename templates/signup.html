@@ -1,0 +1,22 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="form-container">
+    <h2>Signup</h2>
+    <form method="POST">
+        
+        <div class="form-group">
+            
+            <input type="text" name="firstname" placeholder="First Name" id="firstname" required>
+            <input type="text" name="lastname" placeholder="Last Name" id="lastname" required><br>
+            <input type="date" name="dob" id="dob" required>  
+        </div>
+        <div class="form-group">
+            <input type="email" name="email" id="email" required placeholder="Email"> 
+            <input type="password" name="password" id="password" required placeholder="Password">
+        </div>
+        <div class="form-group">
+            <button type="submit">Signup</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

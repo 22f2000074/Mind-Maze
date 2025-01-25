@@ -3,9 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Quiz Master</title>
+    <link rel="stylesheet" href="">
 </head>
 <body>
-    <h1>Hello World</h1>
+    <header>
+        <div class="navbar">
+            <a href="">Home</a>
+            
+        </div>
+    </header>
+    <main>
+        {% block content %}
+        <h1>welcome to quiz master</h1>
+        {% endblock %}
+    </main>
+    <footer>
+        <p>&copy; 2025 Quiz Master</p>
+    </footer>
 </body>
 </html>
