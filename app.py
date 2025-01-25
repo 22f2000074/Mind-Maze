@@ -1,10 +1,16 @@
-from flask import Flask, render_template
+from flask import Flask,render_template
+from config import Config
+
 
 app = Flask(__name__)
-import config
+app.config.from_object(Config)
+
 import models
-import routes
+
+@app.route('/')
+def index():
+    return render_template("index.html")
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug="true")
