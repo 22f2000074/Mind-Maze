@@ -24,6 +24,11 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
+    if 'username' in session:
+        first_name = session.get('first_name')
+        last_name = session.get('last_name')    
+        username=first_name+' '+last_name
+        return render_template("dashboard.html", username= username)
     return render_template("index.html")
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -33,6 +38,8 @@ def login():
         user=User.query.filter_by(username=username).first()
         if user and user.check_password(password):
             session['username'] = username
+            session['first_name'] = user.first_name
+            session['last_name'] = user.last_name
             if user.username == 'admin@quizmaster.com':
                 flash("Login successful!", "success")
                 return render_template("admin_dash.html", username=user.first_name+' '+user.last_name)
@@ -45,15 +52,26 @@ def login():
     return render_template("login.html")
 @app.route('/signup', methods=['GET','POST'])
 def signup():
-    return render_template("signup.html")
+    return render_template(url_for('signup'))
 
 @app.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
     if current_user.username != 'admin@quizmaster.com':
         flash('Access Denied', 'danger')
-        return redirect(url_for('login'))
+        return redirect(url_for('login.html'))
     return render_template('admin_dash.html')
+@app.route('/dashboard')
+@login_required
+def user_dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('login'))
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
