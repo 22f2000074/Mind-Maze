@@ -1,14 +1,23 @@
 from flask_sqlalchemy import SQLAlchemy
-from app import app
+from werkzeug.security import generate_password_hash, check_password_hash
 
-db = SQLAlchemy(app)
+
+db = SQLAlchemy()
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    username = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
-    role= db.Column(db.String(120), nullable=False)#admin, user, teacher
-    full_name = db.Column(db.String(150))
+    first_name = db.Column(db.String(150), nullable=False)
+    last_name = db.Column(db.String(150), nullable=True)
+    
+    
+
+    
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
 
 class Subject(db.Model):
@@ -54,6 +63,6 @@ class Score(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     total_scored = db.Column(db.Integer)
 
-with app.app_context():
-    db.create_all()
+
+
 

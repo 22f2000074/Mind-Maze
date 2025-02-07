@@ -1,22 +1,52 @@
 {% extends "index.html" %}
 {% block content %}
-<div class="form-container">
-    <h2>Signup</h2>
-    <form method="POST">
+<div>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <img src="/static/images/logo2.webp" width="60" height="60" class="d-inline-block align-center" alt="">
+            Mind Maze
+        </a>
+        <div class="ml-auto">
+          <a class="nav-item nav-link d-inline-block" href="/">Home</a>
+            <a class="nav-item nav-link d-inline-block" href="/login">Login</a>  
+        </div>
+    </div>
+  </nav>
+</div>
+<div  id="signup_form">
+    <h2 class-="text-center">Signup</h2>
+    <form>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label for="inputEmail4">Email</label>
+            <input type="email" class="form-control" id="inputEmail4" placeholder="Email">
+          </div>
+          <div class="form-group col-md-6">
+            <label for="inputPassword4">Password</label>
+            <input type="password" class="form-control" id="inputPassword4" placeholder="Password">
+          </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+              <label >First Name</label>
+              <input type="text" class="form-control"  placeholder="First Name">
+            </div>
+            <div class="form-group col-md-6">
+              <label>Last Name</label>
+              <input type="text" class="form-control" placeholder="Last Name">
+            </div>
+          </div>
         
-        <div class="form-group">
-            
-            <input type="text" name="firstname" placeholder="First Name" id="firstname" required>
-            <input type="text" name="lastname" placeholder="Last Name" id="lastname" required><br>
-            <input type="date" name="dob" id="dob" required>  
+        <div class="form-check" id="check2">
+          <input class="form-check-input" type="checkbox" id="gridCheck">
+          <label class="form-check-label" for="gridCheck">
+            Check me out
+          </label>
         </div>
-        <div class="form-group">
-            <input type="email" name="email" id="email" required placeholder="Email"> 
-            <input type="password" name="password" id="password" required placeholder="Password">
-        </div>
-        <div class="form-group">
-            <button type="submit">Signup</button>
-        </div>
+        
+        <button type="submit" class="btn btn-primary">Sign Up</button>
     </form>
+    
 </div>
 {% endblock %}
