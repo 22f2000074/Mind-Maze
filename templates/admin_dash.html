@@ -1,7 +1,61 @@
 {% extends "index.html" %}
 {% block content %}
+<div >
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+          <a class="navbar-brand" href="/">
+              <img src="/static/images/logo2.webp" width="60" height="60" class="d-inline-block align-center" alt="">
+              Mind Maze
+          </a>
+          <div class="ml-auto">
+              <a class="nav-item nav-link d-inline-block" href="/">Home</a>
+              <a class="nav-item nav-link d-inline-block" href="/logout">Logout</a>
+          </div>
+      </div>
+    </nav>
+      
+</div>
 
-<h1>Admin Dashboard</h1>
 <h2>Welcome, {{username}}</h2>
-<button><a href="/logout">Logout</a></button>
+
+<div class="row" id="row">
+    <div class="card">
+        <div class="card-inner">
+            <div class="front-face" style="background-image: url(../static/images/manage_user.png)"></div>
+            <div class="back-face"> 
+                <p class="card-text">View and Manage Users</p>
+                <a href="/settings" class="btn btn-primary">Manage Users</a>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-inner">
+            <div class="front-face"style="background-image: url(../static/images/Manage_quiz.png)"></div>
+            <div class="back-face">
+                <p class="card-text">View and Manage Quizzes</p>
+                <a href="/admin/subjects" class="btn btn-primary">Manage Quizzes</a>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-inner">
+            <div class="front-face" style="background-image: url(../static/images/view_report.png)"></div>
+            <div class="back-face">
+                <p class="card-text">View Charts and Reports</p>
+                <a href="/settings" class="btn btn-primary">View Reports</a>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-inner">
+            <div class="front-face" style="background-image: url(../static/images/settings.png)"></div>
+            <div class="back-face">
+                <p class="card-text">Change Settings</p>
+                <a href="/settings" class="btn btn-primary">Settings</a>
+            </div>
+        </div>
+    </div>
+      
+</div>
+
 {% endblock %}

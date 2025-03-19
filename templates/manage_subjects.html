@@ -1,0 +1,75 @@
+{% extends "index.html" %}
+{% block content %}
+<div >
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+          <a class="navbar-brand" href="/">
+              <img src="/static/images/logo2.webp" width="60" height="60" class="d-inline-block align-center" alt="">
+              Mind Maze
+          </a>
+          <div class="ml-auto">
+              <a class="nav-item nav-link d-inline-block" href="/">Home</a>
+              <a class="nav-item nav-link d-inline-block" href="/logout">Logout</a>
+          </div>
+      </div>
+    </nav>
+      
+</div>
+
+<div class="row" id="row">
+    {% for subject in subjects %}
+    <div class="card">
+        <div class="card-inner">
+            <div class="front-face" style="background-color:red">
+                <p style="text-align:center ;justify-content:center">{{subject.name}}</p>
+            </div>
+            <div class="back-face"> 
+                <p class="card-text">{{subject.description}}</p>
+                <a href="/settings" class="btn btn-primary">View Chapters</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="card">
+        <div class="cardsub">
+            <img src="/static/images/992651.png" width="20px" height="20px"><br><br>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSubjectModal">
+                Add New Subject
+            </button>
+        </div>
+    </div>
+    
+
+</div>
+<!-- Modal Form Popup --> 
+<div class="modal fade" id="addSubjectModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">Add New Subject</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                
+                <form method="POST" action="{{ url_for('manage_subjects') }}">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control") }}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        {{ form.submit(class="btn btn-success") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+  
+{% endblock %}

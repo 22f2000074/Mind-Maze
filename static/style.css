@@ -36,13 +36,79 @@
     margin-top: 10px;
     margin-bottom: 10px;
 }
+#row{
+    margin:auto;
+    display: flex;
+    justify-content:space-evenly;
+    margin-left: 10%;
+    margin-right: 10%;
+    
+}
+
+.card {
+    margin-top: 20px;
+    width: 200px;
+    height: 200px;
+    perspective: 1500px;
+    position: relative;
+    border-color: #F0F8FF;
+    border-radius: 15px;
+}
+
+.card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: transform 0.7s cubic-bezier(.4, .2, .2, 1);
+    transform-style: preserve-3d;
+}
+
+.card:hover .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card .front-face,
+.card .back-face {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background-size: cover;
+    background-position: center;
+    backface-visibility: hidden;
+}
+
+
+
+.card .back-face {
+    padding-top: 40%;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background-color: #F0F8FF;
+    transform: rotateY(180deg);
+    font-weight: bold;
+    font-family:'Open Sans';
+}
+.cardsub {
+    padding-top: 30%;
+    width: 100%;
+    height: 100%;
+    background-color: #D3D3D3;
+    font-weight: bold;
+    font-family:'Open Sans';
+    justify-content: center;
+    text-align: center;
+    
+}
+
 .flash-container {
     position: fixed;
     top: 20px;
     right: 20px;
     z-index: 1050;
 }
-
 
 .flash-message {
     transition: transform 2.5s ease-in-out, opacity 2.5s ease-out;

@@ -1,15 +1,17 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
 
 
 db = SQLAlchemy()
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
     first_name = db.Column(db.String(150), nullable=False)
     last_name = db.Column(db.String(150), nullable=True)
+    is_admin=db.Column(db.Boolean(),default=False,nullable=False)
     
     
 
@@ -23,15 +25,15 @@ class User(db.Model):
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
-    description = db.Column(db.String(500))
+    description = db.Column(db.Text)
     chapters=db.relationship('Chapter', backref='subject', lazy=True)
 
 
 class Chapter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
-    description = db.Column(db.String(500))
-    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'))
+    description = db.Column(db.Text)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
     quizzes=db.relationship('Quiz', backref='chapter', lazy=True)
 
 
