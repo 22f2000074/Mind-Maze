@@ -27,7 +27,7 @@ class Subject(db.Model):
     name = db.Column(db.String(150), nullable=False)
     description = db.Column(db.Text)
     chapters=db.relationship('Chapter', backref='subject', lazy=True)
-
+    image_filename = db.Column(db.String(255), nullable=True)
 
 class Chapter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -35,15 +35,17 @@ class Chapter(db.Model):
     description = db.Column(db.Text)
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
     quizzes=db.relationship('Quiz', backref='chapter', lazy=True)
-
+    image_filename = db.Column(db.String(255), nullable=False)
 
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text)
     chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'))
-    date_of_quiz = db.Column(db.Date)
-    time_duration = db.Column(db.String(10))
+    deadline = db.Column(db.DateTime)
+    duration = db.Column(db.Time)
     questions = db.relationship('Question', backref='quiz', lazy=True)
-
+    image_filename = db.Column(db.String(255), nullable=False)
 
 class Question(db.Model):
     __tablename__ = 'question'
@@ -56,6 +58,7 @@ class Question(db.Model):
     option4 = db.Column(db.String(150), nullable=False)
     correct_option = db.Column(db.Integer, nullable=False)
     marks = db.Column(db.Integer, nullable=False)
+    
 
 
 

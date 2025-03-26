@@ -1,7 +1,7 @@
 #login_form{
     width:400px;
     margin-top: 10%;
-    margin-left: 40%;
+    margin-left: 37%;
     margin-right: 40%;
     margin-bottom: 30%;
     padding: 20px;
@@ -22,7 +22,7 @@
     width:400px;
     height: 350px;
     margin-top: 10%;
-    margin-left: 40%;
+    margin-left: 37%;
     margin-right: 40%;
     margin-bottom: 20%;
     padding: 20px;
@@ -42,7 +42,9 @@
     justify-content:space-evenly;
     margin-left: 10%;
     margin-right: 10%;
-    
+    display: flex;
+    flex-wrap: wrap;
+    gap:40px;
 }
 
 .card {
@@ -53,6 +55,11 @@
     position: relative;
     border-color: #F0F8FF;
     border-radius: 15px;
+    flex: 1 1 calc(18% - 20px);
+    max-width: calc(18% - 20px);
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
 }
 
 .card-inner {
@@ -90,6 +97,7 @@
     transform: rotateY(180deg);
     font-weight: bold;
     font-family:'Open Sans';
+
 }
 .cardsub {
     padding-top: 30%;
@@ -102,7 +110,48 @@
     text-align: center;
     
 }
+.card .back-face1 {
+    
+    width: 100%;
+    height: 100%;
+    justify-content: baseline;
+    align-items: baseline;
+    text-align: center;
+    background-color: #F0F8FF;
+    transform: rotateY(180deg);
+    font-weight: bold;
+    font-family:'Open Sans';
+    
+}
+.card .front-face1,
+.card .back-face1 {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background-size: cover;
+    background-position: center;
+    backface-visibility: hidden;
+}
+@media (max-width: 1024px) {
+    .card {
+        flex: 1 1 calc(33.33% - 20px); 
+        max-width: calc(33.33% - 20px);
+    }
+}
 
+@media (max-width: 768px) {
+    .card {
+        flex: 1 1 calc(50% - 20px); 
+        max-width: calc(50% - 20px);
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        flex: 1 1 100%; 
+        max-width: 100%;
+    }
+}
 .flash-container {
     position: fixed;
     top: 20px;

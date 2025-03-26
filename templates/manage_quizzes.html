@@ -1,0 +1,210 @@
+{% extends "index.html" %}
+{% block content %}
+<div>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <img src="/static/images/logo2.webp" width="60" height="60" class="d-inline-block align-center" alt="">
+                Mind Maze
+            </a>
+            <div class="ml-auto">
+                <a class="nav-item nav-link d-inline-block" href="/">Home</a>
+                <a class="nav-item nav-link d-inline-block" href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+</div>
+
+<div class="row" id="row">
+    {% for quiz in quizzes %}
+    <div class="card">
+        <div class="card-inner">
+            <div class="front-face1 subject-card" data-bg="{{ quiz.image_filename }}">
+                
+            </div>
+            <div class="back-face1" style="
+            width: 200px;
+            padding: 15px;
+            padding-top:10px;
+            background-color: #f7fbff;
+            border-radius: 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1)">
+            <h2 style="font-size: 20px; font-weight: bold">{{ quiz.name }}</h2>
+                <p style="font-size: 15px; color: #333"  class="card-text" >{{ quiz.description }}</p>
+                <p style="font-size: 15px; color: #333" class="card-text" >{{ quiz.duration }}</p>
+                <p style="font-size: 15px; color: red" class="card-text" >{{ quiz.deadline }}</p>
+                <div style="display: flex; gap: 8px; justify-content: center; width: 100%;">
+                    <a href="" ><button  class="btn btn-sm btn-primary" style=" border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer;">View Quizzes</button></a>
+                    <button data-bs-toggle="modal" data-bs-target="#editQuizModal" class="btn btn-sm btn-warning edit-subject-btn"
+                    data-id="{{ quiz.id }}" data-name="{{ quiz.name }}" data-description="{{ quiz.description }}"
+                    data-image="{{ quiz.image_filename }}" data-duration="{{ quiz.duration or '00:00' }}" data-deadline="{{ quiz.deadline }}" style=" border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer;">Edit</button>
+                    
+                    <a href="{{ url_for('delete_quizzes', quiz_id=quiz.id) }}"><button  class="btn btn-sm btn-danger"
+                    onclick="return confirm('Are you sure you want to delete this chapter?');" style=" border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer;">🗑</button></a>
+                </div>
+                
+            
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="card">
+        <div class="cardsub">
+            <img src="/static/images/992651.png" width="20px" height="20px"><br><br>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addQuizModal">
+                Add New Quiz
+            </button>
+        </div>
+    </div>
+    
+</div>
+
+
+
+<!-- Add Quiz Modal -->
+<!-- Add Quiz Modal -->
+<div class="modal fade" id="addQuizModal" tabindex="-1" aria-labelledby="addQuizModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addQuizModalLabel">Add New Quiz</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('manage_quizzes', chapter_id=chapter_id) }}" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control", autocomplete="off") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", autocomplete="off") }}
+                    </div>
+                    
+                    <!-- Timer Input for Duration -->
+                    <div class="mb-3">
+                        <label for="quizDuration" class="form-label">Duration (HH:MM)</label>
+                        <input type="time" id="quizDuration" name="duration" class="form-control">
+                    </div>
+                    
+                    <!-- Date & Time Picker -->
+                    <div class="mb-3">
+                        <label for="quizDeadline" class="form-label">Deadline</label>
+                        <input type="datetime-local" id="quizDeadline" name="deadline" class="form-control">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="subjectImage" class="form-label">Upload Quiz Image</label>
+                        <input type="file" name="image" id="subjectImage" class="form-control" accept="image/*">
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Add Quiz</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Quiz Modal -->
+<div class="modal fade" id="editQuizModal" tabindex="-1" aria-labelledby="editQuizModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editQuizModalLabel">Edit Quiz</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" id="editQuizForm" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" id="editQuizId" name="quiz_id">
+                    
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control", id="editQuizName") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", id="editQuizDescription") }}
+                    </div>
+                    
+                    <!-- Timer Input for Duration -->
+                    <div class="mb-3">
+                        <label for="editQuizDuration" class="form-label">Duration (HH:MM)</label>
+                        <input type="time" id="editQuizDuration" name="duration" class="form-control">
+                    </div>
+                    
+                    <!-- Date & Time Picker -->
+                    <div class="mb-3">
+                        <label for="editQuizDeadline" class="form-label">Deadline</label>
+                        <input type="datetime-local" id="editQuizDeadline" name="deadline" class="form-control">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editQuizImage" class="form-label">Upload New Quiz Image</label>
+                        <input type="file" name="image" id="editQuizImage" class="form-control" accept="image/*">
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Update Quiz</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Set background images for cards dynamically
+        document.querySelectorAll(".subject-card").forEach(function(card) {
+            let image = card.getAttribute("data-bg");
+            if (image) {
+                card.style.backgroundImage = `url('/static/uploads/${image}')`;
+            } else {
+                card.style.backgroundImage = "url('/static/uploads/default.jpg')"; // Default image
+            }
+        });
+        document.addEventListener("DOMContentLoaded", function() {
+            const durationInput = document.getElementById("quizDuration");
+        
+            durationInput.addEventListener("input", function() {
+                let value = durationInput.value;
+                if (value.length === 5) { // If format is HH:MM, add :00
+                    durationInput.value = value + ":00";
+                }
+            });
+        });
+
+        // Populate Edit Subject Modal with existing data
+        const editButtons = document.querySelectorAll(".edit-subject-btn");
+        editButtons.forEach(button => {
+            button.addEventListener("click", function () {
+                document.getElementById("editQuizId").value = this.getAttribute("data-id");
+                document.getElementById("editQuizName").value = this.getAttribute("data-name");
+                document.getElementById("editQuizDescription").value = this.getAttribute("data-description");
+                document.getElementById("editQuizDuration").value = this.getAttribute("data-duration");
+                document.getElementById("editQuizDeadline").value = this.getAttribute("data-deadline");
+                // Set form action dynamically
+                document.getElementById("editQuizForm").action = `/admin/quizzes/edit/${this.getAttribute("data-id")}`;
+            });
+        });
+    });
+</script>
+
+{% endblock %}
