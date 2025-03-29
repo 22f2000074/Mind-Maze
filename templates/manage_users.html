@@ -232,7 +232,7 @@
                                     {% set avg_score = (user.scores|sum(attribute='total_scored') / attempts)|round(2) %}
                                     <div class="progress">
                                         <div class="progress-bar {{ 'bg-danger' if avg_score < 40 else ('bg-warning' if avg_score < 70 else 'bg-success') }}" 
-                                             role="progressbar"
+                                             role="progressbar" style="width: {{ avg_score }}%;" 
                                              aria-valuenow="{{ avg_score }}" aria-valuemin="0" aria-valuemax="100">
                                             {{ avg_score }}%
                                         </div>

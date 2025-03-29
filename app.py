@@ -897,6 +897,34 @@ def user_performance():
         return redirect(url_for('login'))
     return render_template('user_analytics.html', username=f"{current_user.first_name} {current_user.last_name}")
 
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Check if current password is correct
+        if not current_user.check_password(current_password):
+            flash('Current password is incorrect', 'danger')
+            return redirect(url_for('settings'))
+        
+        # Check if new passwords match
+        if new_password != confirm_password:
+            flash('New passwords do not match', 'danger')
+            return redirect(url_for('settings'))
+        
+        # Update the password
+        current_user.set_password(new_password)
+        db.session.commit()
+        
+        flash('Password updated successfully', 'success')
+        return redirect(url_for('settings'))
+    
+    return render_template('settings.html')
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
