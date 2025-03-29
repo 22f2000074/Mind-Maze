@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Maze - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/images/logo2.webp" type="image/webp">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #121212, #291d39);
+            min-height: 100vh;
+            color: #e6f1ff;
+            padding-top: 90px;
+        }
+        
+        .navbar {
+            background: linear-gradient(90deg, #121212, #291d39);
+            padding: 15px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            border-radius: 50%;
+            margin-right: 10px;
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .logo:hover {
+            transform: scale(1.1);
+        }
+        
+        .brand-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff7eb3;
+        }
+        
+        .nav-item {
+            color: white;
+            font-size: 18px;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: background 0.3s ease-in-out;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .welcome-message {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 40px;
+            text-align: center;
+            color: white;
+        }
+        
+        .dashboard-card {
+            background: rgba(41, 29, 57, 0.7);
+            border: 2px solid #9c4fff;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(100, 255, 218, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(156, 79, 255, 0.4);
+        }
+        
+        .dashboard-card:hover::before {
+            opacity: 1;
+        }
+        
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            margin-top: 1rem;
+            color: #ff4ff3;
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .card-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .dashboard-card:hover .card-image {
+            transform: scale(1.1);
+        }
+        
+        .card-btn {
+            background: linear-gradient(90deg, #9c4fff, #ff4ff3);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+        
+        .card-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 79, 243, 0.4);
+            background: linear-gradient(90deg, #ff4ff3, #9c4fff);
+            color: white;
+        }
+        
+        .flash-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        
+        .flash-message {
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-out;
+        }
+        
+        .flash-message.hide {
+            transform: translateY(-70px);
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show flash-message" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/static/images/logo2.webp" width="50" height="50" class="logo" alt="">
+                <span class="brand-name">Mind Maze</span>
+            </a>
+            <div class="nav-links">
+                <a class="nav-item me-3" href="/">Home</a>
+                <a class="nav-item" href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard -->
+    <div class="dashboard-container">
+        <h2 class="welcome-message">Welcome, {{username}}</h2>
+        
+        <div class="row g-4">
+            <!-- Available Quizzes Card -->
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card">
+                    <div>
+                        <img src="/static/images/Manage_quiz.png" alt="Available Quizzes" class="card-image">
+                        <h3 class="card-title">Available Quizzes</h3>
+                    </div>
+                    <a href="/available-quizzes" class="card-btn">Browse Quizzes</a>
+                </div>
+            </div>
+            
+            <!-- Attempted Quizzes Card -->
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card">
+                    <div>
+                        <img src="/static/images/Manage_quiz.png" alt="Attempted Quizzes" class="card-image">
+                        <h3 class="card-title">Attempted Quizzes</h3>
+                    </div>
+                    <a href="/attempted-quizzes" class="card-btn">View History</a>
+                </div>
+            </div>
+            
+            <!-- Analytics Card -->
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card">
+                    <div>
+                        <img src="/static/images/analytics.png" alt="Analytics" class="card-image">
+                        <h3 class="card-title">Analytics</h3>
+                    </div>
+                    <a href="/analytics" class="card-btn">View Stats</a>
+                </div>
+            </div>
+            
+            <!-- Settings Card -->
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card">
+                    <div>
+                        <img src="/static/images/settings.png" alt="Settings" class="card-image">
+                        <h3 class="card-title">Settings</h3>
+                    </div>
+                    <a href="/settings" class="card-btn">Manage Account</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Flash message auto-hide
+        setTimeout(function() {
+            let alerts = document.querySelectorAll('.flash-message');
+            alerts.forEach(alert => {
+                alert.classList.add("hide");
+                setTimeout(() => alert.remove(), 2500);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Maze - Available Quizzes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap">
+    <link rel="icon" href="/static/images/logo2.webp" type="image/webp">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(90deg, #121212, #291d39);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            padding-top: 90px;
+        }
+        
+        .navbar {
+            background: linear-gradient(180deg, #121212, #291d39);
+            padding: 15px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            border-radius: 50%;
+            margin-right: 10px;
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .logo:hover {
+            transform: scale(1.1);
+        }
+        
+        .brand-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff7eb3;
+        }
+        
+        .nav-item {
+            color: white;
+            font-size: 18px;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: background 0.3s ease-in-out;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .available-quizzes-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .quizzes-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .card-header {
+            background: linear-gradient(90deg, #9c4fff, #ff4ff3);
+            color: white;
+            padding: 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table {
+            color: white;
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background: rgba(156, 79, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.1);
+            font-weight: 500;
+            padding: 15px;
+        }
+        
+        .table td {
+            border-color: rgba(255, 255, 255, 0.1);
+            vertical-align: middle;
+            padding: 15px;
+        }
+        
+        .quiz-title {
+            color: #ff7eb3;
+            font-weight: 600;
+        }
+        
+        .timer-badge {
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-block;
+        }
+        
+        .timer-badge.urgent {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+        }
+        
+        .timer-badge.moderate {
+            background: linear-gradient(90deg, #f7b733, #fc4a1a);
+        }
+        
+        .start-btn {
+            background: linear-gradient(90deg, #9c4fff, #ff4ff3);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: transform 0.3s;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .search-container {
+            position: relative;
+            width: 300px;
+        }
+        
+        .search-container input {
+            width: 100%;
+            padding: 10px 15px;
+            padding-left: 40px;
+            border: none;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .search-container input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .search-container input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+        }
+        
+        @media (max-width: 992px) {
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .search-container {
+                width: 100%;
+                margin-top: 15px;
+            }
+            
+            .table-responsive {
+                font-size: 14px;
+            }
+        }
+
+        .flash-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        
+        .flash-message {
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-out;
+        }
+        
+        .flash-message.hide {
+            transform: translateY(-70px);
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show flash-message" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/static/images/logo2.webp" width="50" height="50" class="logo" alt="">
+                <span class="brand-name">Mind Maze</span>
+            </a>
+            <div class="nav-links">
+                <a class="nav-item me-3" href="/">Home</a>
+                <a class="nav-item" href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Available Quizzes -->
+    <div class="available-quizzes-container">
+        <h2 class="text-white mb-4">Available Quizzes</h2>
+        
+        <div class="quizzes-card">
+            <div class="card-header">
+                <h5 class="m-0">Browse Quizzes</h5>
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="quizSearch" placeholder="Search quizzes...">
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table" id="quizzesTable">
+                    <thead>
+                        <tr>
+                            <th>Quiz Name</th>
+                            <th>Chapter</th>
+                            <th>Subject</th>
+                            <th>Deadline</th>
+                            <th>Time Remaining</th>
+                            <th>Status</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for quiz in quizzes %}
+                        <tr>
+                            <td class="quiz-title">{{ quiz.name }}</td>
+                            <td>{{ quiz.chapter.name }}</td>
+                            <td>{{ quiz.chapter.subject.name }}</td>
+                            <td>{{ quiz.deadline.strftime('%d %b %Y, %I:%M %p') }}</td>
+                            <td>
+                                <span class="timer-badge" 
+                                      data-deadline="{{ quiz.deadline.strftime('%Y-%m-%dT%H:%M:%S') }}" 
+                                      data-duration="{{ quiz.duration.strftime('%H:%M:%S') }}">
+                                    Calculating...
+                                </span>
+                            </td>
+                            <td>
+                                {% if quiz.is_expired() %}
+                                    <span class="status-badge bg-danger">Expired</span>
+                                {% elif quiz.is_active() %}
+                                    <span class="status-badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="status-badge bg-info">Upcoming</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if quiz.id in attempted_quiz_ids %}
+                                    <span class="badge bg-success">Already Completed</span>
+                                    <a href="{{ url_for('quiz_results', score_id=completed_scores[quiz.id]) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye me-1"></i> View Results
+                                    </a>
+                                {% elif not quiz.is_expired() %}
+                                    <a href="{{ url_for('attempt_quiz', quiz_id=quiz.id) }}" class="btn btn-primary btn-sm">
+                                        Attempt Quiz
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-secondary btn-sm" disabled>Not Available</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality
+            const searchInput = document.getElementById('quizSearch');
+            const quizzesTable = document.getElementById('quizzesTable');
+            const tableRows = quizzesTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                for (let i = 0; i < tableRows.length; i++) {
+                    const quizName = tableRows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
+                    const chapterName = tableRows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+                    const subjectName = tableRows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+                    
+                    if (quizName.includes(searchTerm) || chapterName.includes(searchTerm) || subjectName.includes(searchTerm)) {
+                        tableRows[i].style.display = '';
+                    } else {
+                        tableRows[i].style.display = 'none';
+                    }
+                }
+            });
+            
+            // Timer functionality
+            const timerBadges = document.querySelectorAll('.timer-badge');
+            
+            function updateTimers() {
+                const now = new Date();
+                
+                timerBadges.forEach(badge => {
+                    const deadlineStr = badge.getAttribute('data-deadline');
+                    const durationStr = badge.getAttribute('data-duration');
+                    
+                    const deadline = new Date(deadlineStr);
+                    const durationParts = durationStr.split(':');
+                    
+                    // Duration in seconds
+                    const durationSeconds = 
+                        parseInt(durationParts[0]) * 3600 + 
+                        parseInt(durationParts[1]) * 60 + 
+                        parseInt(durationParts[2]);
+                    
+                    // Time difference in seconds
+                    const diffSeconds = Math.floor((deadline - now) / 1000);
+                    
+                    // Available time = deadline - current time - duration
+                    const availableTime = diffSeconds;
+                    
+                    if (availableTime <= 0) {
+                        badge.textContent = "Time's up!";
+                        badge.classList.add('urgent');
+                    } else {
+                        // Convert to days, hours, minutes
+                        const days = Math.floor(availableTime / 86400);
+                        const hours = Math.floor((availableTime % 86400) / 3600);
+                        const minutes = Math.floor((availableTime % 3600) / 60);
+                        const seconds = availableTime % 60;
+                        
+                        let timeText = "";
+                        if (days > 0) {
+                            timeText = `${days}d ${hours}h ${minutes}m`;
+                        } else {
+                            timeText = `${hours}h ${minutes}m ${seconds}s`;
+                        }
+                        
+                        badge.textContent = timeText;
+                        
+                        // Add appropriate class based on remaining time
+                        if (availableTime < 3600) {  // Less than 1 hour
+                            badge.classList.add('urgent');
+                            badge.classList.remove('moderate');
+                        } else if (availableTime < 86400) {  // Less than 1 day
+                            badge.classList.add('moderate');
+                            badge.classList.remove('urgent');
+                        } else {
+                            badge.classList.remove('urgent', 'moderate');
+                        }
+                    }
+                });
+            }
+            
+            // Initial update
+            updateTimers();
+            
+            // Update every minute
+            setInterval(updateTimers, 1000);
+            
+            // Flash message auto-hide
+            setTimeout(function() {
+                let alerts = document.querySelectorAll('.flash-message');
+                alerts.forEach(alert => {
+                    alert.classList.add("hide");
+                    setTimeout(() => alert.remove(), 2500);
+                });
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

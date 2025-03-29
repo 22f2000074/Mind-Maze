@@ -1,16 +1,17 @@
-from flask import Flask,render_template, request, redirect, url_for, session, flash
+from flask import Flask,render_template, request, redirect, url_for, session, flash, jsonify
 from config import Config
 from models import db, User, Subject,Chapter, Quiz, Question, Score
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField,TimeField, TextAreaField, SelectField, IntegerField, DateTimeField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, EqualTo, Length
-from datetime import datetime
+from datetime import datetime, timedelta
+import time
 from flask_wtf.file import FileField, FileAllowed
 import os
 from werkzeug.utils import secure_filename
 import werkzeug
-
+from flask_cors import CORS
 
 from flask import current_app
 
@@ -57,6 +58,8 @@ class QuestionForm(FlaskForm):
     option3 = StringField("Option 3", validators=[DataRequired()])
     option4 = StringField("Option 4", validators=[DataRequired()])
     correct_option = SelectField("Correct Answer", choices=[('1', 'Option 1'), ('2', 'Option 2'), ('3', 'Option 3'), ('4', 'Option 4')], validators=[DataRequired()])
+    marks = IntegerField("Marks", validators=[DataRequired()])
+
 class QuizForm(FlaskForm):
     name = StringField('Quiz Name', validators=[DataRequired()])
     description = TextAreaField('Description', validators=[DataRequired()])
@@ -81,7 +84,7 @@ def index():
         if current_user.is_admin:
             username = f"{current_user.first_name} {current_user.last_name}"
             return render_template("admin_dash.html", username=username)
-        return render_template("dashboard.html", username=username)
+        return render_template("user_dash.html", username=username)
         
     return render_template("index.html")
 
@@ -94,6 +97,9 @@ def login():
         remember = request.form.get('remember') == 'on'
         user=User.query.filter_by(username=username).first()
         if user and user.check_password(password):
+            if hasattr(user, 'is_active') and not user.is_active:
+                flash('Your account has been blocked. Please contact an administrator.', 'danger')
+                return redirect(url_for('login'))
             login_user(user,remember=remember)
             session['username'] = username
             session['first_name'] = user.first_name
@@ -105,7 +111,7 @@ def login():
                 return render_template("admin_dash.html", username=user.first_name+' '+user.last_name)
             else:
                 
-                return render_template("dashboard.html", username=user.first_name+' '+user.last_name)
+                return render_template("user_dash.html", username=user.first_name+' '+user.last_name)
         else:
             flash('Invalid username or password', 'danger')
             return redirect(url_for('login'))
@@ -450,11 +456,303 @@ def delete_quizzes(quiz_id):
         image_path = os.path.join("static/uploads", quiz.image_filename)
         if os.path.exists(image_path):
             os.remove(image_path)
+    questions=Question.query.filter_by(quiz_id=quiz_id).all()
+    for question in questions:
+        delete_question(question.id)
     db.session.delete(quiz)
     db.session.commit()
     flash('Quiz deleted successfully!', 'success')
     return redirect(url_for('manage_quizzes', chapter_id=chapter_id))
 
+@app.route('/admin/questions/<int:quiz_id>', methods=['GET', 'POST'])
+@login_required
+def manage_questions(quiz_id):
+    if not current_user.is_admin:
+        flash('Access Denied', 'danger')
+        return redirect(url_for('login'))
+    
+    quiz = Quiz.query.get_or_404(quiz_id)
+    chapter = Chapter.query.get_or_404(quiz.chapter_id)
+    form = QuestionForm()
+
+    if form.validate_on_submit():
+        question_id = request.form.get("question_id")
+        
+        if question_id:  # If editing
+            question = Question.query.get(question_id)
+            question.question_text = form.question_text.data
+            question.option1 = form.option1.data
+            question.option2 = form.option2.data
+            question.option3 = form.option3.data
+            question.option4 = form.option4.data
+            question.correct_option = form.correct_option.data
+            question.marks = form.marks.data
+        else:  # If adding
+            question = Question(question_text=form.question_text.data,
+                                option1=form.option1.data,
+                                option2=form.option2.data,
+                                option3=form.option3.data,
+                                option4=form.option4.data,
+                                correct_option=form.correct_option.data,
+                                marks=form.marks.data,
+                                quiz_id=quiz_id)
+        db.session.add(question)
+        
+        db.session.commit()
+        flash("Question saved successfully!", "success")
+        return redirect(url_for('manage_questions', quiz_id=quiz_id))
+
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    return render_template("add_question.html", form=form, questions=questions, quiz_id=quiz_id, quiz=quiz, chapter=chapter)
+
+#delete
+@app.route('/admin/question/delete/<int:question_id>', methods=['POST'])
+@login_required
+def delete_question(question_id):
+    question = Question.query.get_or_404(question_id)
+    db.session.delete(question)
+    db.session.commit()
+    flash("Question deleted successfully!", "success")
+    return redirect(url_for('manage_questions', quiz_id=question.quiz_id))
+
+#User Management
+@app.route('/admin/users')
+@login_required
+def manage_users():
+    if not current_user.is_admin:
+        flash('Access Denied', 'danger')
+        return redirect(url_for('login'))
+    
+    # Get all non-admin users with their scores
+    users = User.query.filter_by(is_admin=False).all()
+    return render_template('manage_users.html', users=users)
+
+@app.route('/admin/users/block/<int:user_id>')
+@login_required
+def block_user(user_id):
+    if not current_user.is_admin:
+        flash('Access Denied', 'danger')
+        return redirect(url_for('login'))
+    
+    user = User.query.get_or_404(user_id)
+    user.is_active = False
+    db.session.commit()
+    flash(f'User {user.username} has been blocked', 'success')
+    return redirect(url_for('manage_users'))
+
+@app.route('/admin/users/unblock/<int:user_id>')
+@login_required
+def unblock_user(user_id):
+    if not current_user.is_admin:
+        flash('Access Denied', 'danger')
+        return redirect(url_for('login'))
+    
+    user = User.query.get_or_404(user_id)
+    user.is_active = True
+    db.session.commit()
+    flash(f'User {user.username} has been unblocked', 'success')
+    return redirect(url_for('manage_users'))
+@app.route('/available-quizzes')
+@login_required
+def available_quizzes():
+    # Get all quizzes
+    quizzes = Quiz.query.all()
+    
+    # Get already attempted quizzes with their score IDs
+    completed_scores = {}
+    user_scores = Score.query.filter_by(user_id=current_user.id).all()
+    
+    for score in user_scores:
+        # If there are multiple attempts, this will keep the most recent one
+        completed_scores[score.quiz_id] = score.id
+    
+    # Get just the quiz IDs for simple checking
+    attempted_quiz_ids = list(completed_scores.keys())
+    
+    return render_template('available_quizzes.html', 
+                          quizzes=quizzes, 
+                          attempted_quiz_ids=attempted_quiz_ids,
+                          completed_scores=completed_scores)
+@app.route('/attempted-quizzes', methods=['GET'])
+@login_required
+def attempted_quizzes():
+    # Get all scores for the current user
+    scores = Score.query.filter_by(user_id=current_user.id).order_by(Score.id.desc()).all()
+    
+    # Create a list to hold all the data we need for the template
+    attempted_quizzes = []
+    
+    for score in scores:
+        # Get the quiz details
+        quiz = Quiz.query.get(score.quiz_id)
+        
+        if quiz:  # Make sure the quiz still exists
+            # Get chapter and subject
+            chapter = Chapter.query.get(quiz.chapter_id)
+            subject = Subject.query.get(chapter.subject_id) if chapter else None
+            
+            # Get total possible marks
+            questions = Question.query.filter_by(quiz_id=quiz.id).all()
+            total_marks = sum(q.marks for q in questions)
+            
+            # Prepare the data
+            quiz_data = {
+                'score_id': score.id,
+                'score_value': score.total_scored,
+                'created_at': getattr(score, 'created_at', datetime.now()),
+                'quiz_name': quiz.name,
+                'chapter_name': chapter.name if chapter else "Unknown",
+                'subject_name': subject.name if subject else "Unknown",
+                'total_marks': total_marks
+            }
+            
+            attempted_quizzes.append(quiz_data)
+    
+    # Pass the list to the template
+    return render_template('attempted_quizzes.html', scores=attempted_quizzes)
+
+
+@app.route('/attempt-quiz/<int:quiz_id>', methods=['GET', 'POST'])
+@login_required
+def attempt_quiz(quiz_id):
+    # Check if user has already attempted this quiz
+    previous_attempt = Score.query.filter_by(user_id=current_user.id, quiz_id=quiz_id).first()
+    
+    if previous_attempt:
+        flash('You have already attempted this quiz. You cannot take it again.', 'warning')
+        return redirect(url_for('available_quizzes'))
+    
+    # Rest of your existing code...
+    
+    # Fetch the quiz with all questions
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Check if quiz is available
+    if quiz.is_expired():
+        flash('This quiz is no longer available.', 'danger')
+        return redirect(url_for('available_quizzes'))
+    
+    # Calculate time remaining
+    now = datetime.now()
+    time_to_deadline = quiz.deadline - now
+    
+    # Convert quiz duration from Time to timedelta
+    duration_parts = str(quiz.duration).split(':')
+    quiz_duration = timedelta(
+        hours=int(duration_parts[0]),
+        minutes=int(duration_parts[1]),
+        seconds=int(duration_parts[2]) if len(duration_parts) > 2 else 0
+    )
+    
+    # Use the smaller of the two: quiz duration or time to deadline
+    if time_to_deadline < quiz_duration:
+        allowed_time = time_to_deadline
+    else:
+        allowed_time = quiz_duration
+    
+    # Store the quiz end time in the session
+    end_time = now + allowed_time
+    session['quiz_end_time'] = end_time.timestamp()
+    
+    # Format the time for display
+    total_seconds = int(allowed_time.total_seconds())
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    formatted_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    
+    return render_template('attempt_quiz.html', quiz=quiz, formatted_time=formatted_time)
+
+@app.route('/check-time')
+@login_required
+def check_time():
+    if 'quiz_end_time' in session:
+        current_time = time.time()
+        end_time = session.get('quiz_end_time')
+        
+        if current_time >= end_time:
+            # Time is up
+            return {"status": "expired"}
+        else:
+            # Calculate remaining time
+            remaining = end_time - current_time
+            hours = int(remaining // 3600)
+            minutes = int((remaining % 3600) // 60)
+            seconds = int(remaining % 60)
+            formatted = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+            
+            return {"status": "active", "remaining": formatted}
+    
+    return {"status": "no_session"}
+
+@app.route('/submit-quiz/<int:quiz_id>', methods=['POST'])
+@login_required
+def submit_quiz(quiz_id):
+    # Check if time expired
+    if 'quiz_end_time' in session:
+        if time.time() > session.get('quiz_end_time'):
+            flash('Time expired. Your quiz has been submitted automatically.', 'warning')
+    
+    # Process the quiz submission as before
+    quiz = Quiz.query.get_or_404(quiz_id)
+    total_score = 0
+    
+    # Get all questions for this quiz
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    
+    # Check each answer
+    for question in questions:
+        selected_option = request.form.get(f'answer_{question.id}')
+        
+        if selected_option and int(selected_option) == question.correct_option:
+            total_score += question.marks
+    
+    # Save the score
+    score = Score(
+        quiz_id=quiz_id,
+        user_id=current_user.id,
+        total_scored=total_score
+    )
+    db.session.add(score)
+    db.session.commit()
+    
+    # Clear the quiz session data
+    session.pop('quiz_end_time', None)
+    
+    flash(f'Quiz submitted successfully! Your score: {total_score}', 'success')
+    return redirect(url_for('quiz_results', score_id=score.id))
+@app.route('/quiz-results/<int:score_id>')
+@login_required
+def quiz_results(score_id):
+    # Get the score
+    score = Score.query.get_or_404(score_id)
+    
+    # Ensure the score belongs to the current user
+    if score.user_id != current_user.id:
+        flash("You don't have permission to view this result", "danger")
+        return redirect(url_for('attempted_quizzes'))
+    
+    # Get the quiz
+    quiz = Quiz.query.get_or_404(score.quiz_id)
+    
+    # Get the questions
+    questions = Question.query.filter_by(quiz_id=quiz.id).all()
+    
+    # Calculate total possible marks
+    total_marks = sum(q.marks for q in questions)
+    
+    # Add a created_at attribute if it doesn't exist
+    if not hasattr(score, 'created_at'):
+        score.created_at = datetime.now()
+    
+    
+    
+    return render_template('quiz_results.html', 
+                          score=score, 
+                          quiz=quiz,
+                          questions=questions,
+                          total_marks=total_marks,
+                          )
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()

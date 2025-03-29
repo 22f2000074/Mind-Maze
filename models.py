@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from datetime import datetime,timedelta
 
 
 db = SQLAlchemy()
@@ -12,6 +13,8 @@ class User(db.Model, UserMixin):
     first_name = db.Column(db.String(150), nullable=False)
     last_name = db.Column(db.String(150), nullable=True)
     is_admin=db.Column(db.Boolean(),default=False,nullable=False)
+    is_active = db.Column(db.Boolean(), default=True, nullable=False)
+    scores = db.relationship('Score', backref='user', lazy=True)
     
     
 
@@ -20,7 +23,7 @@ class User(db.Model, UserMixin):
         self.password = generate_password_hash(password)
     def check_password(self, password):
         return check_password_hash(self.password, password)
-
+    
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -47,11 +50,20 @@ class Quiz(db.Model):
     questions = db.relationship('Question', backref='quiz', lazy=True)
     image_filename = db.Column(db.String(255), nullable=False)
 
+    def is_expired(self):
+    
+        return datetime.now() > self.deadline
+
+    def is_active(self):
+    
+        now = datetime.now()
+        return now <= self.deadline and now >= (self.deadline - timedelta(days=7))  # Adjust the active window as needed
+
 class Question(db.Model):
     __tablename__ = 'question'
     id = db.Column(db.Integer, primary_key=True)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
-    question_statement = db.Column(db.String(500), nullable=False)
+    question_text = db.Column(db.String(500), nullable=False)
     option1 = db.Column(db.String(150), nullable=False)
     option2 = db.Column(db.String(150), nullable=False)
     option3 = db.Column(db.String(150), nullable=False)
@@ -67,7 +79,7 @@ class Score(db.Model):
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     total_scored = db.Column(db.Integer)
-
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 
 
