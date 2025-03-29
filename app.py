@@ -10,7 +10,7 @@ import time
 from flask_wtf.file import FileField, FileAllowed
 import os
 from werkzeug.utils import secure_filename
-import werkzeug
+
 from flask_cors import CORS
 
 from flask import current_app
@@ -753,6 +753,150 @@ def quiz_results(score_id):
                           questions=questions,
                           total_marks=total_marks,
                           )
+
+# Streamlined API endpoint for data visualization
+# This is the only endpoint used in the performance dashboard
+
+@app.route('/api/scores', methods=['GET'])
+@login_required
+def api_get_user_scores():
+    """Fetch all scores for the current user"""
+    scores = Score.query.filter_by(user_id=current_user.id).all()
+    result = []
+    
+    for score in scores:
+        # Get the quiz
+        quiz = Quiz.query.get(score.quiz_id)
+        
+        # Get chapter and subject
+        chapter = None
+        subject = None
+        
+        if quiz:
+            chapter = Chapter.query.get(quiz.chapter_id)
+            if chapter:
+                subject = Subject.query.get(chapter.subject_id)
+        
+        # Get total possible marks
+        questions = Question.query.filter_by(quiz_id=score.quiz_id).all()
+        total_marks = sum(q.marks for q in questions) if questions else 0
+        
+        # Calculate percentage
+        percentage = round((score.total_scored / total_marks * 100), 2) if total_marks > 0 else 0
+        
+        score_data = {
+            'id': score.id,
+            'quiz_id': score.quiz_id,
+            'quiz_name': quiz.name if quiz else "Unknown",
+            'chapter_name': chapter.name if chapter else "Unknown",
+            'subject_name': subject.name if subject else "Unknown",
+            # Important: The frontend expects 'score', not 'total_scored'
+            'score': score.total_scored,
+            'total_marks': total_marks,
+            'percentage': percentage,  # This field is critical for the visualizations
+            'created_at': score.created_at.isoformat()
+        }
+        
+        result.append(score_data)
+    
+    return jsonify(result)
+#----------------------------------------
+# Admin API Endpoints
+#----------------------------------------
+
+@app.route('/api/admin/users', methods=['GET'])
+@login_required
+def api_get_users():
+    """Fetch all users (admin only)"""
+    if not current_user.is_admin:
+        return jsonify({"error": "Unauthorized access"}), 403
+    
+    users = User.query.filter_by(is_admin=False).all()
+    result = []
+    
+    for user in users:
+        # Get scores for this user
+        user_scores = Score.query.filter_by(user_id=user.id).all()
+        
+        # Calculate statistics
+        total_quizzes_attempted = len(user_scores)
+        total_score = sum(score.total_scored for score in user_scores)
+        
+        # Format scores data
+        scores_data = []
+        for score in user_scores:
+            quiz = Quiz.query.get(score.quiz_id)
+            scores_data.append({
+                'id': score.id,
+                'quiz_id': score.quiz_id,
+                'quiz_name': quiz.name if quiz else "Unknown",
+                'score': score.total_scored,
+                'created_at': score.created_at.isoformat()
+            })
+        
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'name': f"{user.first_name} {user.last_name}",
+            'is_active': user.is_active,
+            'quizzes_attempted': total_quizzes_attempted,
+            'total_score': total_score,
+            'scores': scores_data
+        }
+        
+        result.append(user_data)
+    
+    return jsonify(result)
+
+@app.route('/api/admin/user/<int:user_id>', methods=['GET'])
+@login_required
+def api_get_user(user_id):
+    """Fetch a specific user by ID (admin only)"""
+    if not current_user.is_admin:
+        return jsonify({"error": "Unauthorized access"}), 403
+    
+    user = User.query.get_or_404(user_id)
+    
+    # Get scores for this user
+    user_scores = Score.query.filter_by(user_id=user.id).all()
+    
+    # Calculate statistics
+    total_quizzes_attempted = len(user_scores)
+    total_score = sum(score.total_scored for score in user_scores)
+    
+    # Format scores data
+    scores_data = []
+    for score in user_scores:
+        quiz = Quiz.query.get(score.quiz_id)
+        scores_data.append({
+            'id': score.id,
+            'quiz_id': score.quiz_id,
+            'quiz_name': quiz.name if quiz else "Unknown",
+            'score': score.total_scored,
+            'created_at': score.created_at.isoformat()
+        })
+    
+    result = {
+        'id': user.id,
+        'username': user.username,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'name': f"{user.first_name} {user.last_name}",
+        'is_active': user.is_active,
+        'quizzes_attempted': total_quizzes_attempted,
+        'total_score': total_score,
+        'scores': scores_data
+    }
+    
+    return jsonify(result)
+
+@app.route('/my-performance')
+@login_required
+def user_performance():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    return render_template('user_analytics.html', username=f"{current_user.first_name} {current_user.last_name}")
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
