@@ -1179,9 +1179,9 @@ def settings():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-        if not User.query.filter_by(username='admin@quizmaster.com').first():
-            admin = User(username='admin@quizmaster.com', first_name='Admin', last_name='User', is_admin=True)
-            admin.set_password('123456')
+        if not User.query.filter_by(username='admin@mindmaze.com').first():
+            admin = User(username='admin@mindmaze.com', first_name='Admin', last_name='User', is_admin=True)
+            admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
     app.run(debug="true")
