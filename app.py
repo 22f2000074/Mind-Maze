@@ -754,9 +754,59 @@ def quiz_results(score_id):
                           total_marks=total_marks,
                           )
 
-# Streamlined API endpoint for data visualization
+
 # This is the only endpoint used in the performance dashboard
 
+# Update the api_get_user_scores route in app.py to handle admin requests for other users' scores
+# Add this new API endpoint to your app.py file
+@app.route('/api/admin/student-scores/<int:user_id>', methods=['GET'])
+@login_required
+def api_admin_student_scores(user_id):
+    """Fetch scores for a specific student (admin only)"""
+    if not current_user.is_admin:
+        return jsonify({"error": "Unauthorized access"}), 403
+    
+    user = User.query.get_or_404(user_id)
+    scores = Score.query.filter_by(user_id=user.id).all()
+    result = []
+    
+    for score in scores:
+        # Get the quiz
+        quiz = Quiz.query.get(score.quiz_id)
+        
+        # Get chapter and subject
+        chapter = None
+        subject = None
+        
+        if quiz:
+            chapter = Chapter.query.get(quiz.chapter_id)
+            if chapter:
+                subject = Subject.query.get(chapter.subject_id)
+        
+        # Get total possible marks
+        questions = Question.query.filter_by(quiz_id=score.quiz_id).all()
+        total_marks = sum(q.marks for q in questions) if questions else 0
+        
+        # Calculate percentage
+        percentage = round((score.total_scored / total_marks * 100), 2) if total_marks > 0 else 0
+        
+        score_data = {
+            'id': score.id,
+            'quiz_id': score.quiz_id,
+            'quiz_name': quiz.name if quiz else "Unknown",
+            'chapter_name': chapter.name if chapter else "Unknown",
+            'subject_name': subject.name if subject else "Unknown",
+            'score': score.total_scored,
+            'total_marks': total_marks,
+            'percentage': percentage,
+            'created_at': score.created_at.isoformat()
+        }
+        
+        result.append(score_data)
+    
+    return jsonify(result)
+
+# Keep your original api_get_user_scores route unchanged
 @app.route('/api/scores', methods=['GET'])
 @login_required
 def api_get_user_scores():
@@ -890,13 +940,187 @@ def api_get_user(user_id):
     
     return jsonify(result)
 
+# Add this route to your app.py file
+@app.route('/admin/analytics')
+@login_required
+def admin_analytics():
+    if not current_user.is_admin:
+        flash('Access Denied', 'danger')
+        return redirect(url_for('login'))
+    
+    # Get subjects data
+    subjects_data = []
+    for subject in Subject.query.all():
+        chapters = Chapter.query.filter_by(subject_id=subject.id).all()
+        chapters_count = len(chapters)
+        
+        quizzes_count = 0
+        total_score_percentage = 0
+        total_attempts = 0
+        students_set = set()
+        
+        for chapter in chapters:
+            chapter_quizzes = Quiz.query.filter_by(chapter_id=chapter.id).all()
+            quizzes_count += len(chapter_quizzes)
+            
+            for quiz in chapter_quizzes:
+                scores = Score.query.filter_by(quiz_id=quiz.id).all()
+                questions = Question.query.filter_by(quiz_id=quiz.id).all()
+                total_marks = sum(q.marks for q in questions) if questions else 0
+                
+                for score in scores:
+                    if total_marks > 0:
+                        total_score_percentage += (score.total_scored / total_marks) * 100
+                        total_attempts += 1
+                        students_set.add(score.user_id)
+        
+        avg_score = round(total_score_percentage / total_attempts, 1) if total_attempts > 0 else 0
+        
+        subjects_data.append({
+            'name': subject.name,
+            'description': subject.description or "",
+            'chapters_count': chapters_count,
+            'quizzes_count': quizzes_count,
+            'students_count': len(students_set),
+            'avg_score': avg_score
+        })
+    
+    # Get chapters data
+    chapters_data = []
+    for chapter in Chapter.query.all():
+        subject = Subject.query.get(chapter.subject_id)
+        quizzes = Quiz.query.filter_by(chapter_id=chapter.id).all()
+        
+        total_score_percentage = 0
+        total_attempts = 0
+        students_set = set()
+        
+        for quiz in quizzes:
+            scores = Score.query.filter_by(quiz_id=quiz.id).all()
+            questions = Question.query.filter_by(quiz_id=quiz.id).all()
+            total_marks = sum(q.marks for q in questions) if questions else 0
+            
+            for score in scores:
+                if total_marks > 0:
+                    total_score_percentage += (score.total_scored / total_marks) * 100
+                    total_attempts += 1
+                    students_set.add(score.user_id)
+        
+        avg_score = round(total_score_percentage / total_attempts, 1) if total_attempts > 0 else 0
+        
+        chapters_data.append({
+            'name': chapter.name,
+            'subject_name': subject.name if subject else "Unknown",
+            'quizzes_count': len(quizzes),
+            'students_count': len(students_set),
+            'avg_score': avg_score
+        })
+    
+    # Get quizzes data and chart data
+    quizzes_data = []
+    quiz_names = []
+    quiz_scores = []
+    
+    for quiz in Quiz.query.all():
+        chapter = Chapter.query.get(quiz.chapter_id)
+        subject = Subject.query.get(chapter.subject_id) if chapter else None
+        
+        questions = Question.query.filter_by(quiz_id=quiz.id).all()
+        questions_count = len(questions)
+        total_marks = sum(q.marks for q in questions) if questions else 0
+        
+        scores = Score.query.filter_by(quiz_id=quiz.id).all()
+        total_score = 0
+        
+        for score in scores:
+            if total_marks > 0:
+                total_score += (score.total_scored / total_marks) * 100
+        
+        avg_score = round(total_score / len(scores), 1) if scores and total_marks > 0 else 0
+        
+        quizzes_data.append({
+            'name': quiz.name,
+            'chapter_name': chapter.name if chapter else "Unknown",
+            'subject_name': subject.name if subject else "Unknown",
+            'questions_count': questions_count,
+            'students_count': len(scores),
+            'avg_score': avg_score,
+            'deadline': quiz.deadline
+        })
+        
+        # Add to chart data if there were attempts
+        if scores and total_marks > 0:
+            quiz_names.append(quiz.name)
+            quiz_scores.append(avg_score)
+    
+    # Get student performance data
+    student_names = []
+    student_scores = []
+    
+    for user in User.query.filter_by(is_admin=False).all():
+        scores = Score.query.filter_by(user_id=user.id).all()
+        
+        if scores:
+            total_percentage = 0
+            valid_scores = 0
+            
+            for score in scores:
+                quiz = Quiz.query.get(score.quiz_id)
+                questions = Question.query.filter_by(quiz_id=quiz.id).all()
+                total_marks = sum(q.marks for q in questions) if questions else 0
+                
+                if total_marks > 0:
+                    total_percentage += (score.total_scored / total_marks) * 100
+                    valid_scores += 1
+            
+            if valid_scores > 0:
+                avg_score = round(total_percentage / valid_scores, 1)
+                student_names.append(f"{user.first_name} {user.last_name}")
+                student_scores.append(avg_score)
+    
+    # Limit chart data to top 10 for readability
+    if len(quiz_names) > 10:
+        quiz_names = quiz_names[:10]
+        quiz_scores = quiz_scores[:10]
+    
+    if len(student_names) > 10:
+        student_names = student_names[:10]
+        student_scores = student_scores[:10]
+    
+    return render_template('admin_analytics.html',
+                          subjects=subjects_data,
+                          chapters=chapters_data,
+                          quizzes=quizzes_data,
+                          quiz_names=quiz_names,
+                          quiz_scores=quiz_scores,
+                          student_names=student_names,
+                          student_scores=student_scores)
+
+
+@app.route('/admin/student-performance/<int:user_id>')
+@login_required
+def admin_student_performance(user_id):
+    if not current_user.is_admin:
+        flash('Access Denied', 'danger')
+        return redirect(url_for('login'))
+    
+    user = User.query.get_or_404(user_id)
+    
+    return render_template('user_analytics.html', 
+                          username=f"{user.first_name} {user.last_name}",
+                          user_id=user.id,
+                          viewing_as_admin=True)
+
+
 @app.route('/my-performance')
 @login_required
 def user_performance():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
-    return render_template('user_analytics.html', username=f"{current_user.first_name} {current_user.last_name}")
-
+    return render_template('user_analytics.html', 
+                          username=f"{current_user.first_name} {current_user.last_name}",
+                          user_id=current_user.id,
+                          viewing_as_admin=False)
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():

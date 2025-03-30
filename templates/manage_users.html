@@ -248,19 +248,27 @@
                                 <span class="badge bg-danger">Blocked</span>
                                 {% endif %}
                             </td>
-                            <td class="text-center">
-                                {% if user.is_active %}
-                                <a href="{{ url_for('block_user', user_id=user.id) }}" class="action-button block-button"
-                                   onclick="return confirm('Are you sure you want to block {{ user.username }}?');">
-                                    <i class="fas fa-ban"></i> Block
-                                </a>
-                                {% else %}
-                                <a href="{{ url_for('unblock_user', user_id=user.id) }}" class="action-button unblock-button"
-                                   onclick="return confirm('Are you sure you want to unblock {{ user.username }}?');">
-                                    <i class="fas fa-check"></i> Unblock
-                                </a>
-                                {% endif %}
-                            </td>
+                            <!-- Update the Actions column in the manage_users.html file -->
+<!-- Find the Actions cell in the table row and replace it with this code -->
+
+<td class="text-center">
+    <div class="d-flex justify-content-center gap-2">
+        <a href="{{ url_for('admin_student_performance', user_id=user.id) }}" class="action-button view-button" style="background: rgba(156, 79, 255, 0.7); color: white;">
+            <i class="fas fa-chart-line"></i> View Performance
+        </a>
+        {% if user.is_active %}
+        <a href="{{ url_for('block_user', user_id=user.id) }}" class="action-button block-button"
+           onclick="return confirm('Are you sure you want to block {{ user.username }}?');">
+            <i class="fas fa-ban"></i> Block
+        </a>
+        {% else %}
+        <a href="{{ url_for('unblock_user', user_id=user.id) }}" class="action-button unblock-button"
+           onclick="return confirm('Are you sure you want to unblock {{ user.username }}?');">
+            <i class="fas fa-check"></i> Unblock
+        </a>
+        {% endif %}
+    </div>
+</td>
                         </tr>
                         {% endfor %}
                     </tbody>
