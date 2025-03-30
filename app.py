@@ -91,32 +91,47 @@ def index():
 #login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # If user is already logged in, redirect them
+    if current_user.is_authenticated:
+        if current_user.is_admin:
+            return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('user_dashboard'))
+    
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         remember = request.form.get('remember') == 'on'
-        user=User.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username).first()
+        
         if user and user.check_password(password):
             if hasattr(user, 'is_active') and not user.is_active:
                 flash('Your account has been blocked. Please contact an administrator.', 'danger')
                 return redirect(url_for('login'))
-            login_user(user,remember=remember)
+            
+            # Login the user with the remember flag
+            login_user(user, remember=remember)
+            
+            # Store user info in session
             session['username'] = username
             session['first_name'] = user.first_name
             session['last_name'] = user.last_name
-            session['is_admin']=user.is_admin
+            session['is_admin'] = user.is_admin
+            
             flash("Login successful!", "success")
+            
+            # Get the page the user was trying to access before login
+            next_page = request.args.get('next')
+            
+            # Redirect to appropriate dashboard
             if user.is_admin:
-                
-                return render_template("admin_dash.html", username=user.first_name+' '+user.last_name)
+                return redirect(next_page or url_for('admin_dashboard'))
             else:
-                
-                return render_template("user_dash.html", username=user.first_name+' '+user.last_name)
+                return redirect(next_page or url_for('user_dashboard'))
         else:
             flash('Invalid username or password', 'danger')
             return redirect(url_for('login'))
+            
     return render_template("login.html")
-
 #signup route
 @app.route('/signup', methods=['GET','POST'])
 def signup():
@@ -144,16 +159,28 @@ def admin_dashboard():
 @app.route('/dashboard')
 @login_required
 def user_dashboard():
-    return render_template('dashboard.html')
+    return render_template('user_dash.html')
 
 #logout
+# Updated logout route that explicitly handles the remember me cookie
 @app.route('/logout')
 @login_required
 def logout():
+    # Get the user before we log them out
+    user = current_user
+    
+    # Standard logout process
     logout_user()
+    
+    # Clear all session data
     session.clear()
-    flash("You have been logged out.","success")
-    return redirect(url_for('login'))
+    
+    # Clear the "remember me" cookie if it exists
+    response = redirect(url_for('index'))
+    response.delete_cookie('remember_token')  # This is the default cookie name used by Flask-Login
+    
+    flash("You have been logged out.", "success")
+    return response
 
 @app.route('/admin/subjects', methods=['GET', 'POST'])
 @login_required
